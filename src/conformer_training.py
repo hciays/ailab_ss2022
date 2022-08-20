@@ -10,7 +10,7 @@ from transformers import (
     TrainingArguments,
     Trainer,
     Wav2Vec2CTCTokenizer,
-    Wav2Vec2ForCTC,
+    Wav2Vec2ConformerForCTC,
 )
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
@@ -19,11 +19,11 @@ TOTAL_TRAINING_SIZE = 439325
 TOTAL_VALIDATION_SIZE = 16033
 
 wer_metric = load_metric("wer")
-if os.path.exists("transformer_results") is True:
+if os.path.exists("conformer_results") is True:
     print("Model logging directory already exists.")
 else:
     print("Creating logging directory.........................")
-    os.mkdir("transformer_results")
+    os.mkdir("conformer_results")
     print("Directory transformer_results created.........................")
 
 
@@ -102,52 +102,54 @@ prepared_training = subset_train.map(prepare_dataset, num_proc=16)
 prepared_evaluation = subset_val.map(prepare_dataset, num_proc=1)
 data_collator = DataCollatorCTCWithPadding(processor=processor, padding=True)
 print("Defining the model .........................\n")
-model = Wav2Vec2ForCTC.from_pretrained(
-    "facebook/wav2vec2-base",
+model = Wav2Vec2ConformerForCTC.from_pretrained(
+    "facebook/wav2vec2-conformer-rope-large-960h-ft",
     ctc_loss_reduction="mean",
     pad_token_id=processor.tokenizer.pad_token_id,
     vocab_size=len(processor.tokenizer),
     attention_dropout=0.1,
     hidden_dropout=0.1,
     mask_time_prob=0.05,
+    ignore_mismatched_sizes=True,
 )
-model.freeze_feature_extractor()
-training_arg = TrainingArguments(
-    output_dir="./transformer_results",
-    learning_rate=1e-4,
-    seed=p.SEED,
-    fp16=True,
-    weight_decay=0.005,
-    num_train_epochs=args.epochs,
-    warmup_steps=1000,
+model.freeze_feature_encoder()
+training_args = TrainingArguments(
+    output_dir="./conformer_results",
+    save_steps=1000,
+    group_by_length=True,
     evaluation_strategy="steps",
+    num_train_epochs=args.epochs,
+    gradient_checkpointing=True,
+    learning_rate=1e-4,
+    weight_decay=0.005,
+    save_total_limit=3,
+    seed=p.SEED,
+    warmup_steps=1000,
     eval_steps=1000,
     logging_steps=1000,
-    save_steps=1000,
     per_device_train_batch_size=16,
-    save_total_limit=3,
     dataloader_num_workers=8,
 )
 trainer = Trainer(
     model=model,
-    args=training_arg,
+    args=training_args,
     data_collator=data_collator,
     compute_metrics=compute_metrics,
     train_dataset=prepared_training,
     eval_dataset=prepared_evaluation,
     tokenizer=processor.feature_extractor,
 )
-print("Training the Transformer.........................")
+print("Training the Conformer.........................")
 
 if args.resume_training:
-    print("Resuming Transformer training from last checkpoint.........................")
+    print("Resuming Conformer training from last checkpoint.........................")
     trainer.train(resume_from_checkpoint=True)
 else:
-    print("Starting Transformer training.........................")
+    print("Starting Conformer training.........................")
     trainer.train()
 print("Training done: Evaluation starts.........................")
 r = trainer.evaluate()
 print("Evaluation done..........................\n")
 print(r, "\n")
-print("Saving model in transformer_model")
-trainer.save_model("transformer_model")
+print("Saving model in conformer_model")
+trainer.save_model("conformer_model")
