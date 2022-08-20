@@ -28,6 +28,10 @@ The preprocessing does the following:
 4. Removes special characters.
 5. Takes care of padding the sentences.
 6. Saves the data set in directories ``training_set, validation_set, test_set``.
-7. Creates the model's tokenizer.
+7. Creates the model's tokenizer and saves it.
 
-The script requires following arguments: token ( string from huggingface), num_workers(int). It can be launched via : ``python prepare_dataset.py token num_workers``
+The script requires following arguments: Token ( string from huggingface), num_workers(int). It can be launched via : ``python prepare_dataset.py --token Token --workers num_workers``
+
+
+## Training
+
