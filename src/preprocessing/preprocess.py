@@ -5,7 +5,7 @@ from datasets import load_dataset, Audio
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 SEED = 2022
-SPECIAL = '[\!\?\.\,\-\;\:\"\“\%\‘\”\�\']'
+SPECIAL = "[\!\?\.\,\-\;\:\"\“\%\‘\”\�']"
 RESAMPLER = torchaudio.transforms.Resample(orig_freq=48_000, new_freq=16_000)
 
 
@@ -21,7 +21,7 @@ def download(token: str, dataset_name: str):
 def remove_and_resample(batch):
     speech_array, sampling_rate = torchaudio.load(batch["path"])
     batch["speech"] = RESAMPLER(speech_array).squeeze().numpy()
-    batch["sentence"] = re.sub(SPECIAL, '', batch["sentence"]).lower()
+    batch["sentence"] = re.sub(SPECIAL, "", batch["sentence"]).lower()
     return batch
 
 
@@ -42,7 +42,17 @@ def preprocess(dataset, num_workers):
 
     # Removing unecessary columns.
     dataset = dataset.remove_columns(
-        ["client_id", "up_votes", "down_votes", "age", "gender", "accent", "locale", "segment"])
+        [
+            "client_id",
+            "up_votes",
+            "down_votes",
+            "age",
+            "gender",
+            "accent",
+            "locale",
+            "segment",
+        ]
+    )
 
     # Resamplig the audio data.
     dataset = dataset.map(remove_and_resample, num_proc=num_workers)
@@ -64,29 +74,35 @@ def tokenisation(train, val, test, num_of_proc, batch_size):
     Returns vocabulary as a dictionnary.
     """
 
-    vocabs_train = train.map(extract_all_chars,
-                             batched=True,
-                             batch_size=batch_size,
-                             keep_in_memory=True,
-                             num_proc=num_of_proc,
-                             remove_columns=train.column_names)
-    vocabs_eval = val.map(extract_all_chars,
-                          batched=True,
-                          batch_size=batch_size,
-                          keep_in_memory=True,
-                          num_proc=num_of_proc,
-                          remove_columns=train.column_names)
-    vocabs_test = test.map(extract_all_chars,
-                           batched=True,
-                           batch_size=batch_size,
-                           keep_in_memory=True,
-                           num_proc=num_of_proc,
-                           remove_columns=train.column_names)
+    vocabs_train = train.map(
+        extract_all_chars,
+        batched=True,
+        batch_size=batch_size,
+        keep_in_memory=True,
+        num_proc=num_of_proc,
+        remove_columns=train.column_names,
+    )
+    vocabs_eval = val.map(
+        extract_all_chars,
+        batched=True,
+        batch_size=batch_size,
+        keep_in_memory=True,
+        num_proc=num_of_proc,
+        remove_columns=train.column_names,
+    )
+    vocabs_test = test.map(
+        extract_all_chars,
+        batched=True,
+        batch_size=batch_size,
+        keep_in_memory=True,
+        num_proc=num_of_proc,
+        remove_columns=train.column_names,
+    )
 
     vocab = set()
 
     for vocab_data in {vocabs_train, vocabs_eval, vocabs_test}:
-        for char_list in vocab_data['vocab']:
+        for char_list in vocab_data["vocab"]:
             vocab.update(char_list)
     vocab_dict = {v: k for k, v in enumerate(vocab)}
     vocab_dict["|"] = vocab_dict[" "]
@@ -95,6 +111,6 @@ def tokenisation(train, val, test, num_of_proc, batch_size):
     vocab_dict["[UNK]"] = len(vocab_dict)
     vocab_dict["[PAD]"] = len(vocab_dict)
 
-    print(f'Vocab size:{len(vocab_dict)}')
+    print(f"Vocab size:{len(vocab_dict)}")
 
     return vocab_dict
