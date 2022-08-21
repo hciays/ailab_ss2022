@@ -37,9 +37,12 @@ The script requires following arguments: Token ( string from huggingface), num_w
 
 There are 2 training scripts: One for the Transformer model and one for the Conformer model. The scripts need as parameters the following:
 - number of epochs: An integer
-- Percentage of data to use: an Integer in [0, 100].
+- Percentage of data to use: an Integer in [0 , 100].
 - If to resume the training or not.
 
 
-To train the transformer for Example, One could use the following command:
-``python transformer_training.py --epochs 10 --data 50 --no-resume_training``
+To train the Transformer for Example, One could use the following command:
+
+``python transformer_training.py --epochs 10 --data 50 --no-resume_training > output_transformer.txt``
+
+Models hperparameters can be changed in the scripts.

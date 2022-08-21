@@ -1,4 +1,6 @@
 import argparse
+import time
+from datetime import datetime
 import os
 import numpy as np
 import preprocessing.preprocess as p
@@ -90,17 +92,18 @@ feature_extractor = Wav2Vec2FeatureExtractor(
     return_attention_mask=False,
 )
 processor = Wav2Vec2Processor(feature_extractor=feature_extractor, tokenizer=tokenizer)
-
 print("Processing training and validation data.........................\n")
+now = datetime.now()
+print("Beginning time : ", now)
 train = load_from_disk("training_set")
 subset_train = train.shuffle(seed=p.SEED).select(range(Sub_sample_training))
 val = load_from_disk("validation_set")
 subset_val = val.shuffle(seed=p.SEED).select(range(Sub_sample_validation))
-
-
 prepared_training = subset_train.map(prepare_dataset, num_proc=16)
 prepared_evaluation = subset_val.map(prepare_dataset, num_proc=1)
 data_collator = DataCollatorCTCWithPadding(processor=processor, padding=True)
+now = datetime.now()
+print("Ending time : ", now)
 print("Defining the model .........................\n")
 model = Wav2Vec2ConformerForCTC.from_pretrained(
     "facebook/wav2vec2-conformer-rope-large-960h-ft",
@@ -124,6 +127,7 @@ training_args = TrainingArguments(
     weight_decay=0.005,
     save_total_limit=3,
     seed=p.SEED,
+    no_cuda=True,
     warmup_steps=1000,
     eval_steps=1000,
     logging_steps=1000,
@@ -140,16 +144,28 @@ trainer = Trainer(
     tokenizer=processor.feature_extractor,
 )
 print("Training the Conformer.........................")
-
+now = datetime.now()
+print("Beginning time : ", now)
 if args.resume_training:
     print("Resuming Conformer training from last checkpoint.........................")
     trainer.train(resume_from_checkpoint=True)
+    now = datetime.now()
+    print("Ending time : ", now)
 else:
     print("Starting Conformer training.........................")
     trainer.train()
+    now = datetime.now()
+    print("Ending time : ", now)
+
 print("Training done: Evaluation starts.........................")
+now = datetime.now()
+print("Beginning time : ", now)
 r = trainer.evaluate()
 print("Evaluation done..........................\n")
+now = datetime.now()
+print("Ending time : ", now)
 print(r, "\n")
-print("Saving model in conformer_model")
-trainer.save_model("conformer_model")
+timestr = time.strftime("%Y%m%d-%H%M%S")
+dir = "conformer_model_"+timestr
+print("Saving model in " + dir)
+trainer.save_model(dir)
