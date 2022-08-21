@@ -166,6 +166,6 @@ now = datetime.now()
 print("Ending time : ", now)
 print(r, "\n")
 timestr = time.strftime("%Y%m%d-%H%M%S")
-dir = "conformer_model_"+timestr
+dir = "conformer_model_" + timestr
 print("Saving model in " + dir)
 trainer.save_model(dir)
