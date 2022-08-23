@@ -2,6 +2,7 @@ import argparse
 import time
 from datetime import datetime
 import os
+from torchsummary import summary
 import numpy as np
 import preprocessing.preprocess as p
 from preprocessing.process import DataCollatorCTCWithPadding
@@ -15,7 +16,7 @@ from transformers import (
     Wav2Vec2ForCTC,
 )
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
 TOTAL_TRAINING_SIZE = 439325
 TOTAL_VALIDATION_SIZE = 16033
@@ -115,6 +116,7 @@ model = Wav2Vec2ForCTC.from_pretrained(
     mask_time_prob=0.05,
 )
 model.freeze_feature_extractor()
+summary(model=model)
 training_arg = TrainingArguments(
     output_dir="./transformer_results",
     learning_rate=1e-4,

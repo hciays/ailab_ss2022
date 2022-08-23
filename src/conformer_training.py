@@ -3,6 +3,7 @@ import time
 from datetime import datetime
 import os
 import numpy as np
+from torchsummary import summary
 import preprocessing.preprocess as p
 from preprocessing.process import DataCollatorCTCWithPadding
 from datasets import load_from_disk, load_metric
@@ -15,7 +16,7 @@ from transformers import (
     Wav2Vec2ConformerForCTC,
 )
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
 TOTAL_TRAINING_SIZE = 439325
 TOTAL_VALIDATION_SIZE = 16033
@@ -116,6 +117,7 @@ model = Wav2Vec2ConformerForCTC.from_pretrained(
     ignore_mismatched_sizes=True,
 )
 model.freeze_feature_encoder()
+summary(model=model)
 training_args = TrainingArguments(
     output_dir="./conformer_results",
     save_steps=1000,

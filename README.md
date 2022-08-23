@@ -3,8 +3,11 @@
 This repository contains code to build a German ASR system based on transformers and the [Common voice 9.0 dataset](https://commonvoice.mozilla.org/en/datasets). We use the pre-trained [Wav2Vec Transformer](https://huggingface.co/docs/transformers/model_doc/wav2vec2) as well as the pre-trained [Wave2Vec Conformer](https://huggingface.co/docs/transformers/model_doc/wav2vec2-conformer) , both from Facebook.
 
 ## Hardware Requirements
+> **Warning:**
+>  The transformer model has around 100 millions trainable parameters; the conformer model is almost 7 times the transformer model.Therefore, be cautious with hardware.
 
 1. At least 100Gb Disk space
+2. At least 32Gb GPU Memory if you intend to use GPU.(particularly for the conformer)
 
 
 ## Setup
@@ -35,8 +38,8 @@ The script requires following arguments: Token ( string from huggingface), num_w
 
 ## Training
 
-There are 2 training scripts: One for the Transformer model and one for the Conformer model. The scripts need as parameters the following:
-- number of epochs: An integer
+There are 2 training scripts: One for the Transformer model and one for the Conformer model. The scripts need as arguments the following:
+- Number of epochs: An integer
 - Percentage of data to use: an Integer in [0 , 100].
 - If to resume the training or not.
 
@@ -46,3 +49,24 @@ To train the Transformer for Example, One could use the following command:
 ``python transformer_training.py --epochs 10 --data 50 --no-resume_training > output_transformer.txt``
 
 Models hperparameters can be changed in the scripts.
+
+## Test
+
+To test the trained model, first start by copying the ``vocab.json`` file created during tokenization into the directory where the model is saved.
+
+Then test the model by running ``test_script.py``. It requires follow arguments:
+- Model Directory: The path to the model you want to test.
+- Model: transformer or conformer.
+- Percentage of data to use for testing: an Integer in [0 , 100].
+- If to print predicted sentences or not.
+
+An Example of command could be:
+``python model_testing.py --model transformer --model_dir transformer_model --data 50 --print_examples > output_results.txt``
+
+
+> **Warning:**
+>  At the time this repository was created, the conformer model was still in development. Therefore, some compatibility problems may arise.
+
+> **Note:**
+> Fill free to contact me in case you have some issues or questions.
+> 
